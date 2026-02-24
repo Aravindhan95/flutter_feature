@@ -47,9 +47,10 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3 
         with: 
           github_token: ${{ secrets.GITHUB_TOKEN }} 
-          publish_dir: build/host/outputs/repo 
+          publish_dir: ./build/host/outputs/repo 
           publish_branch: gh-pages 
           destination_dir: maven
+          force_orphan: true
 
   build_ios_framework:
     name: Build iOS XCFramework
