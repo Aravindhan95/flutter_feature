@@ -7,7 +7,7 @@ tags:
 workflow_dispatch:
 
 jobs:
-build-android-aar:
+build_android_aar:
 name: Build Android AAR
 runs-on: ubuntu-latest
 
@@ -41,7 +41,7 @@ steps:
       name: android-maven-repo
       path: maven-repo
 
-build-ios-framework:
+build_ios_framework:
 name: Build iOS XCFramework
 runs-on: macos-latest
 
