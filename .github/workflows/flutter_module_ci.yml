@@ -1,81 +1,77 @@
 name: Flutter Module CI
 
 on:
-push:
-tags:
-- 'v*'
-workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
-build_android_aar:
-name: Build Android AAR
-runs-on: ubuntu-latest
+  build_android_aar:
+    name: Build Android AAR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.2'
+          cache: true
 
-steps:
-  - name: Checkout repo
-    uses: actions/checkout@v4
+      - name: Flutter pub get
+        run: |
+          flutter clean
+          flutter pub get
 
-  - name: Setup Flutter
-    uses: subosito/flutter-action@v2
-    with:
-      flutter-version: '3.41.2'
-      cache: true
+      - name: Build AAR
+        run: flutter build aar --release --no-debug
 
-  - name: Flutter pub get
-    run: |
-      flutter clean
-      flutter pub get
+      - name: Prepare Maven repo
+        run: |
+          mkdir -p maven-repo
+          cp -R build/host/outputs/repo/* maven-repo/
 
-  - name: Build AAR
-    run: flutter build aar --release --no-debug
+      - name: Upload Maven artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-maven-repo
+          path: maven-repo
 
-  - name: Prepare Maven repo
-    run: |
-      mkdir -p maven-repo
-      cp -R build/host/outputs/repo/* maven-repo/
+  build_ios_framework:
+    name: Build iOS XCFramework
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-  - name: Upload Maven artifact
-    uses: actions/upload-artifact@v4
-    with:
-      name: android-maven-repo
-      path: maven-repo
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.2'
+          cache: true
 
-build_ios_framework:
-name: Build iOS XCFramework
-runs-on: macos-latest
+      - name: Install CocoaPods
+        run: |
+          sudo gem install cocoapods
+          pod setup
 
+      - name: Flutter pub get
+        run: |
+          flutter clean
+          flutter pub get
 
-steps:
-  - name: Checkout repo
-    uses: actions/checkout@v4
+      - name: Build iOS framework
+        run: flutter build ios-framework --release --xcframework --no-debug
 
-  - name: Setup Flutter
-    uses: subosito/flutter-action@v2
-    with:
-      flutter-version: '3.41.2'
-      cache: true
+      - name: Zip XCFramework
+        run: |
+          cd build/ios/framework/Release
+          zip -r ios-xcframework.zip .
 
-  - name: Install CocoaPods
-    run: |
-      sudo gem install cocoapods
-      pod setup
-
-  - name: Flutter pub get
-    run: |
-      flutter clean
-      flutter pub get
-
-  - name: Build iOS framework
-    run: flutter build ios-framework --release --xcframework --no-debug
-
-  - name: Zip XCFramework
-    run: |
-      cd build/ios/framework/Release
-      zip -r ios-xcframework.zip .
-
-  - name: Upload iOS artifact
-    uses: actions/upload-artifact@v4
-    with:
-      name: ios-xcframework
-      path: build/ios/framework/Release/ios-xcframework.zip
+      - name: Upload iOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-xcframework
+          path: build/ios/framework/Release/ios-xcframework.zip
