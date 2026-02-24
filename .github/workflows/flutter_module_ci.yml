@@ -38,6 +38,13 @@ jobs:
         with:
           name: android-maven-repo
           path: maven-repo
+      - name: Deploy Maven repo to GitHub Pages 
+        uses: peaceiris/actions-gh-pages@v3 
+        with: 
+          github_token: ${{ secrets.GITHUB_TOKEN }} 
+          publish_dir: build/host/outputs/repo 
+          publish_branch: gh-pages 
+          destination_dir: maven
 
   build_ios_framework:
     name: Build iOS XCFramework
