@@ -8,11 +8,9 @@ workflow_dispatch:
 
 jobs:
 build-android-aar:
-name: Build & Publish Android AAR
+name: Build Android AAR
 runs-on: ubuntu-latest
-permissions:
-  contents: read
-  packages: write
+
 
 steps:
   - name: Checkout repo
@@ -24,14 +22,7 @@ steps:
       flutter-version: '3.41.2'
       cache: true
 
-  - name: Flutter doctor
-    run: flutter doctor -v
-
-  - name: Extract version from tag
-    id: version
-    run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
-
-  - name: Flutter clean & pub get
+  - name: Flutter pub get
     run: |
       flutter clean
       flutter pub get
@@ -39,26 +30,21 @@ steps:
   - name: Build AAR
     run: flutter build aar --release --no-debug
 
-  - name: Upload AAR artifact
-    uses: actions/upload-artifact@v4
-    with:
-      name: android-aar
-      path: build/host/outputs/repo
-
-  - name: Prepare Maven Repo
+  - name: Prepare Maven repo
     run: |
       mkdir -p maven-repo
       cp -R build/host/outputs/repo/* maven-repo/
 
-  - name: Upload Maven artifact (temporary)
+  - name: Upload Maven artifact
     uses: actions/upload-artifact@v4
     with:
       name: android-maven-repo
       path: maven-repo
 
 build-ios-framework:
-name: Build & Publish iOS XCFramework
+name: Build iOS XCFramework
 runs-on: macos-latest
+
 
 steps:
   - name: Checkout repo
@@ -70,19 +56,12 @@ steps:
       flutter-version: '3.41.2'
       cache: true
 
-  - name: Flutter doctor
-    run: flutter doctor -v
-
   - name: Install CocoaPods
     run: |
       sudo gem install cocoapods
       pod setup
 
-  - name: Extract version from tag
-    id: version
-    run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
-
-  - name: Flutter clean & pub get
+  - name: Flutter pub get
     run: |
       flutter clean
       flutter pub get
@@ -93,14 +72,10 @@ steps:
   - name: Zip XCFramework
     run: |
       cd build/ios/framework/Release
-      zip -r MyFlutterModule-${{ steps.version.outputs.VERSION }}.zip .
+      zip -r ios-xcframework.zip .
 
   - name: Upload iOS artifact
     uses: actions/upload-artifact@v4
     with:
       name: ios-xcframework
-      path: build/ios/framework/Release/*.zip
-
-  - name: Push to CocoaPods spec repo
-    run: |
-      pod repo push ${{ secrets.IOS_SPEC_REPO_NAME }} MyFlutterModule.podspec --allow-warnings --verbose
+      path: build/ios/framework/Release/ios-xcframework.zip
