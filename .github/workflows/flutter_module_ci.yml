@@ -1,58 +1,106 @@
 name: Flutter Module CI
 
 on:
-  push:
-    tags:
-      - 'v*'
-  workflow_dispatch:
+push:
+tags:
+- 'v*'
+workflow_dispatch:
 
 jobs:
-  build-android-aar:
-    name: Build Android AAR
-    runs-on: ubuntu-latest
+build-android-aar:
+name: Build & Publish Android AAR
+runs-on: ubuntu-latest
+permissions:
+  contents: read
+  packages: write
 
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+steps:
+  - name: Checkout repo
+    uses: actions/checkout@v4
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.41.2'
+  - name: Setup Flutter
+    uses: subosito/flutter-action@v2
+    with:
+      flutter-version: '3.41.2'
+      cache: true
 
-      - name: Flutter pub get
-        run: flutter pub get
+  - name: Flutter doctor
+    run: flutter doctor -v
 
-      - name: Build AAR
-        run: flutter build aar
+  - name: Extract version from tag
+    id: version
+    run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
 
-      - name: Upload AAR artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: android-aar
-          path: build/host/outputs/repo
+  - name: Flutter clean & pub get
+    run: |
+      flutter clean
+      flutter pub get
 
-  build-ios-framework:
-    name: Build iOS XCFramework
-    runs-on: macos-latest
+  - name: Build AAR
+    run: flutter build aar --release --no-debug
 
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+  - name: Upload AAR artifact
+    uses: actions/upload-artifact@v4
+    with:
+      name: android-aar
+      path: build/host/outputs/repo
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.41.2'
+  - name: Prepare Maven Repo
+    run: |
+      mkdir -p maven-repo
+      cp -R build/host/outputs/repo/* maven-repo/
 
-      - name: Flutter pub get
-        run: flutter pub get
+  - name: Upload Maven artifact (temporary)
+    uses: actions/upload-artifact@v4
+    with:
+      name: android-maven-repo
+      path: maven-repo
 
-      - name: Build iOS framework
-        run: flutter build ios-framework --xcframework
+build-ios-framework:
+name: Build & Publish iOS XCFramework
+runs-on: macos-latest
 
-      - name: Upload iOS artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-xcframework
-          path: build/ios/framework
+steps:
+  - name: Checkout repo
+    uses: actions/checkout@v4
+
+  - name: Setup Flutter
+    uses: subosito/flutter-action@v2
+    with:
+      flutter-version: '3.41.2'
+      cache: true
+
+  - name: Flutter doctor
+    run: flutter doctor -v
+
+  - name: Install CocoaPods
+    run: |
+      sudo gem install cocoapods
+      pod setup
+
+  - name: Extract version from tag
+    id: version
+    run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+  - name: Flutter clean & pub get
+    run: |
+      flutter clean
+      flutter pub get
+
+  - name: Build iOS framework
+    run: flutter build ios-framework --release --xcframework --no-debug
+
+  - name: Zip XCFramework
+    run: |
+      cd build/ios/framework/Release
+      zip -r MyFlutterModule-${{ steps.version.outputs.VERSION }}.zip .
+
+  - name: Upload iOS artifact
+    uses: actions/upload-artifact@v4
+    with:
+      name: ios-xcframework
+      path: build/ios/framework/Release/*.zip
+
+  - name: Push to CocoaPods spec repo
+    run: |
+      pod repo push ${{ secrets.IOS_SPEC_REPO_NAME }} MyFlutterModule.podspec --allow-warnings --verbose
