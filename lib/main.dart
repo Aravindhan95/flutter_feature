@@ -13,11 +13,24 @@ class MyFlutterModule extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const HomeScreen(),
-        '/second': (context) => const SecondScreen(),
-        '/third': (context) => const ThirdScreen(),
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case '/second':
+            return MaterialPageRoute(
+              builder: (_) => const SecondScreen(),
+            );
+
+          case '/third':
+            return MaterialPageRoute(
+              builder: (_) => const ThirdScreen(),
+            );
+
+          case '/':
+          default:
+            return MaterialPageRoute(
+              builder: (_) => const HomeScreen(),
+            );
+        }
       },
     );
   }
