@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+import 'package:flutter_feature/forth_screen.dart';
+import 'package:flutter_feature/home_screen.dart';
+
 import 'second_screen.dart';
 import 'third_screen.dart';
 
@@ -13,25 +15,28 @@ class MyFlutterModule extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      onGenerateRoute: (settings) {
-        switch (settings.name) {
-          case '/second':
-            return MaterialPageRoute(
-              builder: (_) => const SecondScreen(),
-            );
-
-          case '/third':
-            return MaterialPageRoute(
-              builder: (_) => const ThirdScreen(),
-            );
-
-          case '/':
-          default:
-            return MaterialPageRoute(
-              builder: (_) => const HomeScreen(),
-            );
-        }
+      onGenerateInitialRoutes: (String initialRoute) {
+        return [_buildRoute(initialRoute)];
       },
+
+      onGenerateRoute: (settings) => _buildRoute(settings.name),
     );
+  }
+
+  static Route _buildRoute(String? name) {
+    switch (name) {
+      case '/second':
+        return MaterialPageRoute(builder: (_) => const SecondScreen());
+
+      case '/third':
+        return MaterialPageRoute(builder: (_) => const ThirdScreen());
+
+      case '/fourth':
+        return MaterialPageRoute(builder: (_) => const ForthScreen());
+
+      case '/':
+      default:
+        return MaterialPageRoute(builder: (_) => const HomeScreen());
+    }
   }
 }
