@@ -15,7 +15,13 @@ class MyFlutterModule extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+<<<<<<< HEAD
       onGenerateInitialRoutes: (String initialRoute) {
+=======
+      // 🚨 REMOVE initialRoute completely
+      onGenerateInitialRoutes: (String initialRoute) {
+        // 👇 Flutter will honor native route
+>>>>>>> refs/remotes/origin/main
         return [_buildRoute(initialRoute)];
       },
 
