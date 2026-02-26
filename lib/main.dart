@@ -9,16 +9,13 @@ class MyFlutterModule extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text(
-            'Hello from Flutter Module 🚀',
-            style: TextStyle(fontSize: 24),
-          ),
-        ),
-      ),
+    return MaterialApp(
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const HomeScreen(),
+        '/second': (context) => const SecondScreen(),
+        '/third': (context) => const ThirdScreen(),
+      },
     );
   }
 }
-
